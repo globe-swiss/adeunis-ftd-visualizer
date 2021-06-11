@@ -1,12 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import MarkerClusterer from '@googlemaps/markerclustererplus';
+import { Subscription } from 'rxjs';
+import { Target } from './data.model';
+import { DataService } from './data.service';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
+  subscriptions = new Subscription();
   title = 'lora-viz';
 
   center = { lat: 46.818188, lng: 8.227512 };
@@ -27,50 +31,37 @@ export class AppComponent implements OnInit {
 
   map!: google.maps.Map;
 
+  constructor(private dataService: DataService) {}
+
   ngOnInit() {
     const map = new google.maps.Map(document.getElementById('map')!, {
-      zoom: 4,
-      center: { lat: 41.85, lng: -87.65 },
+      zoom: this.zoom,
+      center: this.center,
       maxZoom: 48,
     });
-    this.generateMockPinResultsResponse(1000, map);
+    this.subscriptions.add(
+      this.dataService
+        .data(undefined)
+        .subscribe((values) => this.generatePinCluster(values, map))
+    );
   }
 
-  private rInt(min: number, max: number) {
-    return Math.floor(Math.random() * (max - min + 1) + min);
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
   }
 
-  private getRandomUsLat() {
-    const max = 48;
-    const min = 30;
-    const num = this.rInt(min, max);
-    return num;
-  }
-
-  private getRandomUsLng() {
-    const max = -70;
-    const min = -110;
-    const num = this.rInt(min, max);
-    return num;
-  }
-
-  public generateMockPinResultsResponse(
-    nMarkers: number,
-    map: google.maps.Map
-  ): void {
-    const markers = [];
-    for (var i = 0; i < nMarkers; i++) {
-      const latitude: number = this.getRandomUsLat();
-      const longitude: number = this.getRandomUsLng();
+  public generatePinCluster(values: Target[], map: google.maps.Map): void {
+    const markers: google.maps.Marker[] = [];
+    values.forEach((value) => {
       const marker = new google.maps.Marker({
-        position: { lat: latitude, lng: longitude },
+        position: { lat: value.lat, lng: value.lng },
         map: map,
         icon: {
-          url: this.marker_color[this.rInt(0, 2)],
+          url: this.marker_color[value.strength],
         },
       });
       markers.push(marker);
-    }
+    });
 
     new MarkerClusterer(map, markers, {
       imagePath:
