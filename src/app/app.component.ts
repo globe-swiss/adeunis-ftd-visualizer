@@ -60,6 +60,7 @@ export class AppComponent implements OnInit, OnDestroy {
           url: this.marker_color[value.strength],
         },
       });
+      this.attachMessage(marker, this.getMessage(value));
       markers.push(marker);
     });
 
@@ -68,5 +69,24 @@ export class AppComponent implements OnInit, OnDestroy {
         'https://github.com/googlemaps/js-markerclustererplus/raw/main/images/m',
       maxZoom: 15,
     });
+  }
+
+  private attachMessage(marker: google.maps.Marker, message: string) {
+    const infowindow = new google.maps.InfoWindow({
+      content: message,
+    });
+
+    marker.addListener('click', () => {
+      infowindow.open(marker.get('map'), marker);
+    });
+  }
+
+  private getMessage(target: Target) {
+    var message = '<ul>';
+    Object.entries(target).forEach((x) => {
+      message = message.concat(`<li>${x[0]}: ${x[1]}</li>`);
+    });
+    message = message.concat('</ul>');
+    return message;
   }
 }
