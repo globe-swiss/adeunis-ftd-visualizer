@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { map } from 'rxjs/operators';
+import { map, mergeAll } from 'rxjs/operators';
 import { Source, Target } from './data.model';
 
 @Injectable({
@@ -9,7 +9,7 @@ import { Source, Target } from './data.model';
 export class DataService {
   constructor(private afs: AngularFirestore) {}
 
-  public data(date: number | undefined) {
+  public data(date: string | undefined) {
     return this.afs
       .collection<Source>('data', (ref) => {
         if (date) {
@@ -21,21 +21,19 @@ export class DataService {
       .valueChanges()
       .pipe(
         map((result) =>
-          result.map((rec) => {
-            return {
-              lat: rec.payload_decoded.latitude,
-              lng: rec.payload_decoded.longitude,
-              rssi: rec.payload_decoded.rssi_dl,
-              snr: rec.payload_decoded.snr_dl,
-              strength: this.getStrength(
-                this.calcESP(
-                  rec.payload_decoded.rssi_dl,
-                  rec.payload_decoded.snr_dl
-                )
-              ),
-            } as Target;
+          result.map((s) => {
+            const t: Target[] = [];
+            s.payloads.forEach((p) => {
+              t.push({
+                ...p,
+                deveui: s.deveui,
+                strength: this.getStrength(this.calcESP(p.rssi, p.snr)),
+              } as Target);
+            });
+            return t;
           })
-        )
+        ),
+        mergeAll()
       );
   }
 

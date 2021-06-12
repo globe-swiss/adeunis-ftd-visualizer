@@ -1,14 +1,20 @@
 export class Source {
-  date: number;
-  payload_decoded: {
-    longitude: number;
-    latitude: number;
-    rssi_dl: number;
-    snr_dl: number;
-  };
+  date: string;
+  deveui: string;
+  payloads: [
+    {
+      lng: number;
+      lat: number;
+      rssi: number;
+      snr: number;
+      ts: string;
+    }
+  ];
 }
 
 export class Target {
+  deveui: string
+  ts: string
   lat: number;
   lng: number;
   rssi: number;
