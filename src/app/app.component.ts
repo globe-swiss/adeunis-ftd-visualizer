@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import MarkerClusterer from '@googlemaps/markerclustererplus';
-import { Subscription } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
+import { map, switchAll, tap } from 'rxjs/operators';
 import { Target } from './data.model';
 import { DataService } from './data.service';
 
@@ -10,17 +11,20 @@ import { DataService } from './data.service';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  subscriptions = new Subscription();
-  title = 'lora-viz';
+  private subscriptions = new Subscription();
+  public title = 'lora-viz';
+  public filter$ = new BehaviorSubject<string | undefined>(undefined);
+  private markerCusterer: MarkerClusterer;
 
-  center = { lat: 46.818188, lng: 8.227512 };
-  zoom = 9;
-  options: google.maps.MapOptions = {
+  private mapOptions: google.maps.MapOptions = {
     mapTypeId: google.maps.MapTypeId.TERRAIN,
-    mapTypeControl: false,
-    fullscreenControl: false,
+    mapTypeControl: true,
+    fullscreenControl: true,
     streetViewControl: false,
+    center: { lat: 46.818188, lng: 8.227512 },
+    zoom: 9,
     minZoom: 8,
+    maxZoom: 48,
   };
 
   marker_color = [
@@ -29,24 +33,29 @@ export class AppComponent implements OnInit, OnDestroy {
     'http://maps.google.com/mapfiles/ms/icons/red-dot.png',
   ];
 
-  map!: google.maps.Map;
-
   constructor(private dataService: DataService) {}
 
-  ngOnInit() {
-    const map = new google.maps.Map(document.getElementById('map')!, {
-      zoom: this.zoom,
-      center: this.center,
-      maxZoom: 48,
-    });
-    this.subscriptions.add(
-      this.dataService
-        .data(undefined)
-        .subscribe((values) => this.generatePinCluster(values, map))
+  public ngOnInit() {
+    const gmap = new google.maps.Map(
+      document.getElementById('map')!,
+      this.mapOptions
     );
+
+    this.markerCusterer = new MarkerClusterer(gmap, [], {
+      imagePath:
+        'https://github.com/googlemaps/js-markerclustererplus/raw/main/images/m',
+      maxZoom: 15,
+    });
+
+    this.filter$
+      .pipe(
+        map((date) => this.dataService.data(date)),
+        switchAll(),
+      )
+      .subscribe((values) => this.generatePinCluster(values, gmap));
   }
 
-  ngOnDestroy() {
+  public ngOnDestroy() {
     this.subscriptions.unsubscribe();
   }
 
@@ -64,11 +73,8 @@ export class AppComponent implements OnInit, OnDestroy {
       markers.push(marker);
     });
 
-    new MarkerClusterer(map, markers, {
-      imagePath:
-        'https://github.com/googlemaps/js-markerclustererplus/raw/main/images/m',
-      maxZoom: 15,
-    });
+    this.markerCusterer.clearMarkers();
+    this.markerCusterer.addMarkers(markers);
   }
 
   private attachMessage(marker: google.maps.Marker, message: string) {
@@ -88,5 +94,9 @@ export class AppComponent implements OnInit, OnDestroy {
     });
     message = message.concat('</ul>');
     return message;
+  }
+
+  public filter(date: string | undefined = undefined) {
+    this.filter$.next(date);
   }
 }

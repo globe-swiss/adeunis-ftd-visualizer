@@ -1,2 +1,12 @@
 <h3>Adeunis Field Tester Visualization</h3>
 <div id="map-container"><div id="map"></div></div>
+<label for="filter">Filter Date:</label>
+<input
+  type="date"
+  id="filter"
+  name="filter"
+  [value]="filter$ | async"
+  #filterdate
+/>
+<button (click)="filter(filterdate.value)">Apply</button>
+<button (click)="filter()">Reset</button>
