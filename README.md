@@ -13,3 +13,7 @@ ng build && firebase deploy
 ```bash
 ng serve -c=local --no-live-reload
 ```
+
+## Acknowledgements
+
+The code of the payload decoder is based on the story [PAYLOAD DECODER FOR ADEUNIS FIELD TEST DEVICE - TTN MAPPER INTEGRATION](https://www.thethingsnetwork.org/labs/story/payload-decoder-for-adeunis-field-test-device-ttn-mapper-integration) by [SmartBooking](https://www.thethingsnetwork.org/u/SmartBooking)
