@@ -50,6 +50,11 @@ exports.decodeAdeunisFTDPayload = functions
     res.sendStatus(200);
   });
 
+/**
+ * The code of the decoder function taken from
+ * [PAYLOAD DECODER FOR ADEUNIS FIELD TEST DEVICE - TTN MAPPER INTEGRATION](https://www.thethingsnetwork.org/labs/story/payload-decoder-for-adeunis-field-test-device-ttn-mapper-integration)
+ * by [SmartBooking](https://www.thethingsnetwork.org/u/SmartBooking) 
+**/
 function decodePayload(bytes) {
   function parseCoordinate(raw_value, coordinate) {
     var raw_itude = raw_value;
